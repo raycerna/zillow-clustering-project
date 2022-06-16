@@ -105,9 +105,7 @@ def prep_zillow(df):
     # keep only properties less than 3000 square feet
     df = df[df.calculatedfinishedsquarefeet <= 3000 ]    
     # keep only properties less than 1m.
-    df = df[df.taxvaluedollarcnt <= 100000]  
-    # Remove 13 rows where unit count is 2. The NaN's can be safely
-    # assumed as 1 and were just mislabeled in other counties.  
+    df = df[df.taxvaluedollarcnt <= 100000]
     #df = df[df['unitcnt'] != 2]
     #df['unitcnt'].fillna(1) 
     # do not need any of finishedsquarefeet columns
@@ -117,8 +115,8 @@ def prep_zillow(df):
                       'assessmentyear', 'roomcnt', 'regionidcounty', 'propertylandusetypeid',
                       'heatingorsystemtypeid', 'id', 'heatingorsystemdesc', 'buildingqualitytypeid'],
             axis=1)    
-    # The last nulls can be dropped altogether. 
-    df = df.dropna()
+    # The last nulls will be filled with mean 
+    df = df.fillna(df.mean())
     # convert the following to int.
     df['yearbuilt'] = df['yearbuilt'].astype(int)
     df["bedroomcnt"] = df["bedroomcnt"].astype(int)
@@ -143,7 +141,7 @@ def prep_zillow(df):
     # add county names for fips feature
     df['county'] = np.where(df.fips == 6037, 'Los Angeles', np.where(df.fips == 6059, 'Orange','Ventura') )
     #df = df.drop(columns = ‘fips’)
-    print('yearbuilt converted to age, added month of transaction, added County names. \n')   
+    print('added month of transaction, added County names, converted yearbuilt to age. \n')   
     # Removing outliers 
     df = remove_outliers(df, 3, ['lotsizesquarefeet', 'structuretaxvaluedollarcnt','rawcensustractandblock']) 
 
