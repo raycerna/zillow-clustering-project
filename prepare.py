@@ -11,10 +11,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 
 
+
 #########################################################################################
 def split_zillow_data(df):
     '''
-    This function performs split on zillow data.
+   # This function performs split on zillow data.
     Returns train, validate, and test dfs.
     '''
     train_validate, test = train_test_split(df, test_size=.2, 
@@ -131,10 +132,15 @@ def prep_zillow(df):
     df["taxvaluedollarcnt"] = df["taxvaluedollarcnt"].astype(int)
     df["landtaxvaluedollarcnt"] = df["landtaxvaluedollarcnt"].astype(int)
     df["taxamount"] = df["taxamount"].astype(int)
+    df['tax_rate'] = (df.taxamount/df.taxvaluedollarcnt) * 100
     df.yearbuilt = df.yearbuilt.astype(object) 
     df['age'] = 2017-df['yearbuilt']
     df = df.drop(columns='yearbuilt')
     df['age'] = df['age'].astype('int')
+    df['age_bin'] = pd.cut(df.age, 
+                           bins = [10, 20, 30, 40],
+                           labels = [1,2,3])
+
     # add month feature
     df['transactiondate'] = df.transactiondate.astype('str')
     df['transaction_month'] = df.transactiondate.str.split('-',expand=True)[1]
@@ -232,9 +238,9 @@ def percentage_stacked_plot(columns_to_plot, title, prep_zillow):
 
 def scale_data(train, validate, test):
 
-    train = train.drop(['logerror','county','transactiondate'], axis=1)
-    validate = validate.drop(['logerror','county','transactiondate'], axis=1)
-    test = test.drop(['logerror','county','transactiondate'], axis=1)
+    train = train.drop(['logerror','county','transactiondate','propertycountylandusecode'], axis=1)
+    validate = validate.drop(['logerror','county','transactiondate','propertycountylandusecode'], axis=1)
+    test = test.drop(['logerror','county','transactiondate','propertycountylandusecode'], axis=1)
 
     # Create the Scaling Object
     scaler = sklearn.preprocessing.StandardScaler()
