@@ -9,6 +9,7 @@ from sklearn import metrics
 import sklearn.preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
+from sklearn.cluster import KMeans
 
 
 
@@ -47,12 +48,10 @@ def handle_missing_values(df, prop_required_column=0.5 , prop_required_row=0.5):
     dropped_col_count = len(original_cols) - len(remaining_cols)
     dropped_cols = list((Counter(original_cols) - Counter(remaining_cols)).elements())
     
-    print(f'The following {dropped_col_count} columns were dropped because they were missing more\
-    than {prop_required_column * 100}% of data: \n{dropped_cols}\n')
+    print(f'The following {dropped_col_count} columns were dropped because they were missing more than {prop_required_column * 100}% of data: \n{dropped_cols}\n')
     dropped_rows = original_rows - remaining_rows
     
-    print(f'{dropped_rows} rows were dropped because they were missing more than\
-          {prop_required_row * 100}% of data')
+    print(f'{dropped_rows} rows were dropped because they were missing more than {prop_required_row * 100}% of data')
           
     return df
 ############################################################################################
@@ -137,17 +136,18 @@ def prep_zillow(df):
     df['age'] = 2017-df['yearbuilt']
     df = df.drop(columns='yearbuilt')
     df['age'] = df['age'].astype('int')
-    df['age_bin'] = pd.cut(df.age, 
-                           bins = [10, 20, 30, 40],
-                           labels = [1,2,3])
+    #df['age_bin'] = pd.cut(df.age, 
+                           #bins = [0, 25, 50, 75],
+                           #labels = [1,2,3])
 
     # add month feature
     df['transactiondate'] = df.transactiondate.astype('str')
     df['transaction_month'] = df.transactiondate.str.split('-',expand=True)[1]
+    df['transaction_month'] = df['transaction_month'].astype(int)
     # add county names for fips feature
     df['county'] = np.where(df.fips == 6037, 'Los Angeles', np.where(df.fips == 6059, 'Orange','Ventura') )
     #df = df.drop(columns = ‘fips’)
-    print('added month of transaction, added County names, converted yearbuilt to age. \n')   
+    print('Features added were transaction_month extracted from transaction_date, County names instead of fips code, and converted yearbuilt to age in years. \n')   
     # Removing outliers 
     df = remove_outliers(df, 3, ['lotsizesquarefeet', 'structuretaxvaluedollarcnt','rawcensustractandblock']) 
 
@@ -272,3 +272,112 @@ def scale_data(train, validate, test):
     return train_scaled, validate_scaled, test_scaled
 
 #########################################################################
+
+#function to plot parameter values in graph
+def univariate(data,col,vartype=[0,1],hue =None):    
+    '''
+    Univariate function will plot parameter values in graphs.
+    df      : dataframe name
+    col     : Column name
+    vartype : variable type : continuous or categorical
+                Continuous(0)   : Distribution, Violin & Boxplot will be plotted.
+                Categorical(1) : Countplot will be plotted.
+    hue     : Only applicable in categorical analysis.
+    '''
+    sns.set(style="darkgrid")
+    df = data.copy()
+    if vartype == 0:
+        fig, ax=plt.subplots(nrows =1,ncols=5,figsize=(20,6))
+        #
+        ax[0].set_title(col+" Distribution Plot")
+        sns.distplot(df[col],ax=ax[0])
+
+        ax[1].set_title(col+" Violin Plot")
+        sns.violinplot(data =df, x=col,ax=ax[1], inner="quartile")#.set(ylabel='')
+        #
+        ax[2].set_title(col+" Box Plot")
+        sns.boxplot(data =df, x=col,ax=ax[2],orient='v')
+        #
+        ax[3].set_title(col+" strip Plot")
+        sns.stripplot(data =df, x=col,ax=ax[3])
+        df[col]=np.log(df[col])
+        ax[4].set_title(col+" scatter Plot")
+        sns.scatterplot(x =df[col], y=df['logerror'],ax=ax[4])
+
+        
+
+    if vartype == 1:
+        temp = pd.Series(data = hue)
+        fig, ax = plt.subplots()
+      
+        width = len(df[col].unique()) + 3 + 2*len(temp.unique())
+        fig.set_size_inches(width , 4)
+        ax = sns.countplot(data = df, x= col, order=df[col].value_counts().index,hue = hue) 
+        if len(temp.unique()) > 0:
+            for p in ax.patches:
+                ax.annotate('{:1.1f}%'.format((p.get_height()*100)/float(len(df))), (p.get_x()+0.05, p.get_height()+10))  
+        else:
+            for p in ax.patches:
+                ax.annotate(p.get_height(), (p.get_x()+0.16, p.get_height()+10)) 
+        del temp
+    else:
+        exit
+    fig.tight_layout()
+    plt.show()
+
+def create_clusters(train_scaled, validate_scaled, test_scaled):
+    '''
+    Function creates three clusters from scaled train - Tax, SQFT, Rooms
+    Fits KMeans to train, predicts on train, validate, test to create clusters for each.
+    Appends clusters to scaled data for modeling.
+    '''
+
+    # Tax Cluster
+    # Selecting Features
+    X_1 = train_scaled[['taxvaluedollarcnt', 'taxamount','tax_rate']]
+    X_2 = validate_scaled[['taxvaluedollarcnt', 'taxamount','tax_rate']]
+    X_3 = test_scaled[['taxvaluedollarcnt', 'taxamount','tax_rate']]
+    # Creating Object
+    kmeans = KMeans(n_clusters=4)
+    # Fitting to Train Only
+    kmeans.fit(X_1)
+    # Predicting to add column to train
+    train_scaled['cluster_tax'] = kmeans.predict(X_1)
+    # Predicting to add column to validate
+    validate_scaled['cluster_tax'] = kmeans.predict(X_2)
+    # Predicting to add column to test
+    test_scaled['cluster_tax'] = kmeans.predict(X_3)
+
+    # SQFT Cluster
+    # Selecting Features
+    X_4 = train_scaled[['calculatedfinishedsquarefeet', 'lotsizesquarefeet']]
+    X_5 = validate_scaled[['calculatedfinishedsquarefeet', 'lotsizesquarefeet']]
+    X_6 = test_scaled[['calculatedfinishedsquarefeet', 'lotsizesquarefeet']]
+    # Creating Object
+    kmeans = KMeans(n_clusters=5)
+    # Fitting to Train Only
+    kmeans.fit(X_4)
+    # Predicting to add column to train
+    train_scaled['cluster_sqft'] = kmeans.predict(X_4)
+    # Predicting to add column to validate
+    validate_scaled['cluster_sqft'] = kmeans.predict(X_5)
+    # Predicting to add column to test
+    test_scaled['cluster_sqft'] = kmeans.predict(X_6)
+
+    # Rooms Cluster
+    # Selecting Features
+    X_7 = train_scaled[['bedroomcnt', 'bathroomcnt']]
+    X_8 = validate_scaled[['bedroomcnt', 'bathroomcnt']]
+    X_9 = test_scaled[['bedroomcnt', 'bathroomcnt']]
+    # Creating Object
+    kmeans = KMeans(n_clusters=4)
+    # Fitting to Train Only
+    kmeans.fit(X_7)
+    # Predicting to add column to train
+    train_scaled['cluster_rooms'] = kmeans.predict(X_7)
+    # Predicting to add column to validate
+    validate_scaled['cluster_rooms'] = kmeans.predict(X_8)
+    # Predicting to add column to test
+    test_scaled['cluster_rooms'] = kmeans.predict(X_9)
+
+    return train_scaled, validate_scaled, test_scaled
