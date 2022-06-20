@@ -116,8 +116,6 @@ def prep_zillow(df):
     df = df[df.calculatedfinishedsquarefeet <= 3000 ]    
     # keep only properties less than 1m.
     df = df[df.taxvaluedollarcnt <= 100000]
-    #df = df[df['unitcnt'] != 2]
-    #df['unitcnt'].fillna(1) 
     # do not need any of finishedsquarefeet columns
     # removing these columns that are repeated and unnecessary
     df =df.drop(columns= ['finishedsquarefeet12', 'fullbathcnt', 'calculatedbathnbr',
@@ -146,9 +144,6 @@ def prep_zillow(df):
     df['age'] = 2017-df['yearbuilt']
     df = df.drop(columns='yearbuilt')
     df['age'] = df['age'].astype('int')
-    #df['age_bin'] = pd.cut(df.age, 
-                           #bins = [0, 25, 50, 75],
-                           #labels = [1,2,3])
 
     # add month feature
     df['transactiondate'] = df.transactiondate.astype('str')
