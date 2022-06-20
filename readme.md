@@ -41,34 +41,34 @@ https://www.kaggle.com/competitions/zillow-prize-1/data?select=zillow_data_dicti
     - Kept only properties valued less than $1m.
     - Removed unneccessary columns (check prepare.py for list)
     - Converted the following to int/obj
-        df['yearbuilt'] = df['yearbuilt'].astype(int)
-        df["bedroomcnt"] = df["bedroomcnt"].astype(int)
-        df["calculatedfinishedsquarefeet"] = df["calculatedfinishedsquarefeet"].astype(int)
-        df["fips"] = df["fips"].astype(int)
-        df["lotsizesquarefeet"] = df["lotsizesquarefeet"].astype(int)
-        df["rawcensustractandblock"] = df["rawcensustractandblock"].astype(int)
-        df["regionidcity"] = df["regionidcity"].astype(int)
-        df["regionidzip"] = df["regionidzip"].astype(int)
-        df["censustractandblock"] = df["censustractandblock"].astype(int)
-        df["structuretaxvaluedollarcnt"] = df["structuretaxvaluedollarcnt"].astype(int)
-        df["taxvaluedollarcnt"] = df["taxvaluedollarcnt"].astype(int)
-        df["landtaxvaluedollarcnt"] = df["landtaxvaluedollarcnt"].astype(int)
-        df["taxamount"] = df["taxamount"].astype(int)
-        df.yearbuilt = df.yearbuilt.astype(object) 
-        df['age'] = df['age'].astype('int')
-        df['transaction_month'] = df['transaction_month'].astype(int)
+       - df['yearbuilt'] = df['yearbuilt'].astype(int)
+       - df["bedroomcnt"] = df["bedroomcnt"].astype(int)
+       - df["calculatedfinishedsquarefeet"] = df["calculatedfinishedsquarefeet"].astype(int)
+       - df["fips"] = df["fips"].astype(int)
+       - df["lotsizesquarefeet"] = df["lotsizesquarefeet"].astype(int)
+       - df["rawcensustractandblock"] = df["rawcensustractandblock"].astype(int)
+       - df["regionidcity"] = df["regionidcity"].astype(int)
+       - df["regionidzip"] = df["regionidzip"].astype(int)
+       - df["censustractandblock"] = df["censustractandblock"].astype(int)
+       - df["structuretaxvaluedollarcnt"] = df["structuretaxvaluedollarcnt"].astype(int)
+       - df["taxvaluedollarcnt"] = df["taxvaluedollarcnt"].astype(int)
+       - df["landtaxvaluedollarcnt"] = df["landtaxvaluedollarcnt"].astype(int)
+       - df["taxamount"] = df["taxamount"].astype(int)
+       - df.yearbuilt = df.yearbuilt.astype(object) 
+       - df['age'] = df['age'].astype('int')
+       - df['transaction_month'] = df['transaction_month'].astype(int)
     - Added these features:
-        df['age'] = 2017-df['yearbuilt']
-        df['tax_rate'] = (df.taxamount/df.taxvaluedollarcnt) * 100
-        df['transaction_month'] = df.transactiondate.str.split('-',expand=True)[1]
-        df['county'] = np.where(df.fips == 6037, 'Los Angeles', np.where(df.fips == 6059, 'Orange','Ventura') )
+       - df['age'] = 2017-df['yearbuilt']
+       - df['tax_rate'] = (df.taxamount/df.taxvaluedollarcnt) * 100
+       - df['transaction_month'] = df.transactiondate.str.split('-',expand=True)[1]
+       - df['county'] = np.where(df.fips == 6037, 'Los Angeles', np.where(df.fips == 6059, 'Orange','Ventura') )
 
 
 - Explore
     - Performed univariate analysis on independent features and logerror.
-    - Performed bivariate and multivariate exploration on several features to find recommendations that drive tax_value.
+    - Performed bivariate and multivariate exploration on several features in correlation to logerror.
     - Further explored features using clustering methodologies.
-    - Visualized features of logerror by using countplots and stackedplots and kdeplots.
+    - Visualized features of logerror using different types of charts.
 
 - Model
     - Train, validated, and tested the predictors/independent features.
